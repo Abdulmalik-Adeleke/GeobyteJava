@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+// import java.util.concurrent.CompletableFuture;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -40,32 +40,69 @@ public class Staff {
 
     @GetMapping(value = "/staff/hubs")
     public ResponseEntity<?> getHubs() {
-        var paylaod = staffService.getHubs();
-        return ResponseEntity.ok(paylaod);
+        try {
+            var paylaod = staffService.getHubs();
+            return ResponseEntity.ok(paylaod);
+        } catch (Exception e) {
+            return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
     }
 
-    // return completableFuture.thenCombine() ?
+    @GetMapping(value = "/staff/originlocations")
+    public ResponseEntity<?> getOrigins() {
+        try {
+            var paylaod = staffService.getOrigins();
+            return ResponseEntity.ok(paylaod);
+        } catch (Exception e) {
+            return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/staff/endlocations")
+    public ResponseEntity<?> getEndLocations(@RequestParam String origin) {
+        try {
+            var paylaod = staffService.getDestinations(origin);
+            return ResponseEntity.ok(paylaod);
+        } catch (Exception e) {
+            return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/staff/orders")
+    public ResponseEntity<?> getOrders() {
+        try {
+            var paylaod = staffService.getOrders();
+            return ResponseEntity.ok(paylaod);
+        } catch (Exception e) {
+            return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // return CompletableFuture ?
     @GetMapping(value = "/staff/getroutes")
     public List<ResultObjectDto> getRoutes(@RequestParam String origin, @RequestParam String destination,
             @RequestParam double radiusInKm) {
         List<ResultObjectDto> result = new ArrayList<ResultObjectDto>();
+
         var destinationInfo = staffService.getDestinations(origin, destination);
 
         int len = destinationInfo.size();
 
-        // TODO: use CompletableFutures
         if (len == 1) {
-            CompletableFuture.supplyAsync(() -> result.add(staffService.getResult(destinationInfo.get(0), radiusInKm)));
+            // CompletableFuture.supplyAsync(() ->
+            // result.add(staffService.getResult(destinationInfo.get(0), radiusInKm)));
+            result.add(staffService.getResult(destinationInfo.get(0), radiusInKm));
         } else if (len == 2) {
-
             // CompletableFuture.supplyAsync(() ->
             // staffService.getResult(destinationInfo.get(0),radiusInKm)
-            // )
+            // ).
             // thenCombine(
             // staffService.getResult(destinationInfo.get(1),radiusInKm),
             // (res1,res2) ->
             // System.out.println(res1)
-            // ) ;
+            // System.out.println(res2)
+            // );
             result.add(staffService.getResult(destinationInfo.get(0), radiusInKm));
             result.add(staffService.getResult(destinationInfo.get(1), radiusInKm));
         }
@@ -78,8 +115,10 @@ public class Staff {
         return staffService.getMoreDeliveryLocations(id, idsToIgnore, radiusInKm);
     }
 
-    @PostMapping(value = "/staff/logs")
-    public ResponseEntity<?> saveRouteLogs(HttpServletRequest request, @RequestBody ChosenRouteLog chosenroutelog) {
+    @PostMapping(value = "/staff/logs") 
+    public ResponseEntity<?> saveRouteLogs(HttpServletRequest request,@RequestBody ChosenRouteLog chosenroutelog) {
+        System.out.println("i am here");
+        
         TokenGenerator tokenGenerator = new TokenGenerator();
         String authheader = request.getHeader(Authorization);
         String jwttoken = authheader.substring(7);
@@ -88,14 +127,12 @@ public class Staff {
             Date date = new Date();
             // TODO: stream request body
             LoggedRoutes routelog = new LoggedRoutes(userEmail, chosenroutelog.log, date);
-            try {
-                log.save(routelog);
-                return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.CREATED);
-            } catch (Exception e) {
-                return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+            routelog.toString();
+            // log.save(routelog);
+            return (ResponseEntity<?>) ResponseEntity.ok("log appended");
         }
         return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.UNAUTHORIZED);
     }
 
 }
+

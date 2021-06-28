@@ -24,32 +24,27 @@ public class Admin {
         this.adminService = adminService;
     }
 
-    @GetMapping(value="/admin/hubs")
-    public ResponseEntity<?> getHubs()
-    {
+    @GetMapping(value = "/admin/hubs")
+    public ResponseEntity<?> getHubs() {
         var paylaod = adminService.getHubs();
         return ResponseEntity.ok(paylaod);
     }
 
-    @PostMapping(value="/admin/destination/add")
-	public ResponseEntity<?> addDestination(@RequestBody DestinationRouteDto destinationroute)
-    {
-        try{
-            adminService.insertDestination(destinationroute.getDestinationdto(),destinationroute.getRoutes());
-        }
-        catch(SQLException e){
+    @PostMapping(value = "/admin/destination/add")
+    public ResponseEntity<?> addDestination(@RequestBody DestinationRouteDto destinationroute) {
+        try {
+            adminService.insertDestination(destinationroute.getDestinationdto(), destinationroute.getRoutes());
+        } catch (SQLException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(HttpStatus.OK);
-    
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @PostMapping(value="/admin/hub/add")
-    public ResponseEntity<?> addHub(@RequestBody HubDto hubdto)
-    {
+    @PostMapping(value = "/admin/hub/add")
+    public ResponseEntity<?> addHub(@RequestBody HubDto hubdto) {
         boolean result = adminService.insertHub(hubdto);
-        if(result){
-            return new ResponseEntity<>(HttpStatus.OK);
+        if (result) {
+            return new ResponseEntity<>(HttpStatus.CREATED);
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
