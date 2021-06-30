@@ -30,7 +30,7 @@ public class UserService {
     public ApplicationUser saveUser(UserDto userdto) {
 
         // random password string generator
-        byte[] array = new byte[7];  // length is bounded by 7
+        byte[] array = new byte[7]; // length is bounded by 7
         new Random().nextBytes(array);
         String generatedPasswordPlaceholder = new String(array, Charset.forName("UTF-8"));
 
@@ -59,12 +59,7 @@ public class UserService {
         Optional<ApplicationUser> user = userRepo.findById(username);
         if (user.isPresent()) {
             String pass = passwordEncoder.encode(password);
-            try {
-                userRepo.updatePassword(username, pass);
-            } catch (Exception e) {
-                 // more specific error message pls
-                return false;
-            }
+            userRepo.updateUserPassword(username, pass);
             return true;
         }
         // more specific error message pls

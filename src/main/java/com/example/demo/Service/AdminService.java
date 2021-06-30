@@ -41,7 +41,7 @@ public class AdminService {
     }
 
     @Transactional(rollbackFor = { SQLException.class })
-    public void insertDestination(DestinationDto destinationDto,List<String> routesobject) throws SQLException
+    public Boolean insertDestination(DestinationDto destinationDto,List<String> routesobject) throws SQLException
     { 
         UUID id = UUID.randomUUID();
         Destination destionation = new Destination(id,
@@ -61,6 +61,7 @@ public class AdminService {
 
         destinationRepo.save(destionation);
         routeRepo.saveAll(routes);
+        return true;
     }
     
     public boolean insertHub(HubDto hubobject)

@@ -8,11 +8,14 @@ import com.example.demo.Auth.AuthModel.PasswordReset;
 import com.example.demo.Auth.AuthModel.UserDto;
 import com.example.demo.Auth.AuthModel.AuthService.UserService;
 import com.example.demo.Auth.Token.TokenGenerator;
+import com.example.demo.Dto.ResponseStatus;
+import com.example.demo.Dto.TokenObj;
 import com.example.demo.Service.ConfirmationTokenService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 public class Auth {
     private final UserService userService;
@@ -33,16 +37,19 @@ public class Auth {
         this.confirmationtoken = confirmationtoken;
     }
 
-    // TODO: change path to admin/register
     @PostMapping("/auth/register")
     public ResponseEntity<?> registerUser(@RequestBody UserDto userdto) {
-        ApplicationUser user = userService.saveUser(userdto);
-        if (user != null) {
+
+        try {
+            ApplicationUser user = userService.saveUser(userdto);
             String token = UUID.randomUUID().toString();
             confirmationtoken.SendToken(user.getName(), user.getEmail(), token);
-            return new ResponseEntity<>(HttpStatus.OK);
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+       
+       // return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
 
@@ -50,7 +57,8 @@ public class Auth {
     public ResponseEntity<?> login(@RequestBody LoginDto login) {
         ApplicationUser user = userService.login(login.getEmail(), login.getPassword());
         String token = tokenGenerator.generateToken(user.getEmail(), user.getRole());
-        return ResponseEntity.ok(token);
+        TokenObj tokendto = new TokenObj(token);
+        return ResponseEntity.ok(tokendto);
     }
 
     @GetMapping("/auth/verifytoken")
@@ -58,12 +66,19 @@ public class Auth {
 
         // - additional email verififcation checks ? someone write a regex pls
         // this is for angular to grant page access
-        Boolean isconfirmed = confirmationtoken.VerifyEmailAndToken(email, token);
-
-        if (isconfirmed) {
-            return (ResponseEntity<?>) ResponseEntity.ok();
-        }
-        return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.FORBIDDEN);
+        try {
+            Boolean isconfirmed = confirmationtoken.VerifyEmailAndToken(email, token);
+            if(isconfirmed){
+                ResponseStatus status = new ResponseStatus("SUCCESS");
+                return ResponseEntity.ok(status);    
+            }
+            else{
+                return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+           
+        } catch (Exception e) {
+            return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.FORBIDDEN);
+        } 
     }
 
     @PutMapping("/auth/resetpassword")
@@ -73,10 +88,11 @@ public class Auth {
         if (isconfirmed) {
             Boolean isreset = userService.updatePassword(passwordreset.email, passwordreset.password);
 
-            if (!isreset) {
-                return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
+            if (isreset) {
+                ResponseStatus status = new ResponseStatus("SUCCESS");
+                return ResponseEntity.ok(status);
             }
-            return (ResponseEntity<?>) ResponseEntity.ok();
+            return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.FORBIDDEN);
     }

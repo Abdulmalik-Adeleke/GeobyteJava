@@ -10,6 +10,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.example.demo.Auth.Token.TokenGenerator;
 import com.example.demo.Dto.ChosenRouteLog;
+import com.example.demo.Dto.DeleteMarked;
+import com.example.demo.Dto.ResponseStatus;
 import com.example.demo.Models.LoggedRoutes;
 import com.example.demo.Repository.LoggedRoutesRepository;
 import com.example.demo.ResponseModel.OrderObjectDto;
@@ -19,12 +21,15 @@ import com.example.demo.Service.StaffService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 public class Staff {
 
@@ -78,6 +83,16 @@ public class Staff {
             return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @PutMapping(value = "/staff/deleteorders")
+    public ResponseEntity<?> deleteOrders(@RequestBody DeleteMarked deletemarked) {
+       
+            var success = staffService.setdeletemarked(deletemarked.getIds());
+            if (success) {
+                ResponseStatus status = new ResponseStatus("SUCCESS");
+                return ResponseEntity.ok(status);
+            }
+            return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
     // return CompletableFuture ?
     @GetMapping(value = "/staff/getroutes")
@@ -110,15 +125,15 @@ public class Staff {
     }
 
     @GetMapping(value = "/staff/extralocations")
-    public List<OrderObjectDto> extraLocations(@RequestParam UUID id, @RequestParam List<Integer> idsToIgnore,
+    public List<OrderObjectDto> extraLocations(@RequestParam String id, @RequestParam List<Integer> idsToIgnore,
             @RequestParam double radiusInKm) {
-        return staffService.getMoreDeliveryLocations(id, idsToIgnore, radiusInKm);
+        UUID guid = UUID.fromString(id);
+        return staffService.getMoreDeliveryLocations(guid, idsToIgnore, radiusInKm);
     }
 
-    @PostMapping(value = "/staff/logs") 
-    public ResponseEntity<?> saveRouteLogs(HttpServletRequest request,@RequestBody ChosenRouteLog chosenroutelog) {
-        System.out.println("i am here");
-        
+    @PostMapping(value = "/staff/logs")
+    public ResponseEntity<?> saveRouteLogs(HttpServletRequest request, @RequestBody ChosenRouteLog chosenroutelog) {
+    
         TokenGenerator tokenGenerator = new TokenGenerator();
         String authheader = request.getHeader(Authorization);
         String jwttoken = authheader.substring(7);
@@ -128,11 +143,10 @@ public class Staff {
             // TODO: stream request body
             LoggedRoutes routelog = new LoggedRoutes(userEmail, chosenroutelog.log, date);
             routelog.toString();
-            // log.save(routelog);
+            log.save(routelog);
             return (ResponseEntity<?>) ResponseEntity.ok("log appended");
         }
         return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.UNAUTHORIZED);
     }
 
 }
-

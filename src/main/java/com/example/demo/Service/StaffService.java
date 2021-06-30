@@ -51,13 +51,29 @@ public class StaffService {
     }
 
     public List<OrdersDto> getOrders() {
+        //  get available orders --> statement "where delete-marked = false" 
         List<OrdersDto> orders = new ArrayList<>();
         orderrepo.findAll().forEach(delivery -> {
-            OrdersDto order = new OrdersDto(delivery.getUserName(), delivery.getOrderCoordinate().getX(),
-                    delivery.getOrderCoordinate().getY(), delivery.getOrderAddress());
-            orders.add(order);
+
+            if (delivery.getDeleteMarked() == false) {
+                OrdersDto order = new OrdersDto(delivery.getUserName(), delivery.getOrderCoordinate().getX(),
+                        delivery.getOrderCoordinate().getY(), delivery.getOrderAddress());
+                orders.add(order);
+            }
+
         });
         return orders;
+    }
+
+    public Boolean setdeletemarked(List<Integer> ids){
+        try {
+            orderrepo.updateDeleteMarker(ids);
+            return true;
+        } catch (Exception e) {
+            System.out.println("Exception "+e);
+            return true;
+        }
+    
     }
 
     public List<HubDto> getHubs() {

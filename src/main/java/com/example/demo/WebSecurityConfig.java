@@ -23,6 +23,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http
+            .cors();
+        http
                 .httpBasic().disable()
                 .csrf().disable()
                 .sessionManagement()
@@ -33,6 +35,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/staff/*").hasRole("STAFF")
                 .antMatchers("/auth/*").permitAll()
                 .and().addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
+
 
 	}
 
