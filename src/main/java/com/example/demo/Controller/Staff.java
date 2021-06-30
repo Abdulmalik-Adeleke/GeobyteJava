@@ -85,7 +85,8 @@ public class Staff {
     }
     @PutMapping(value = "/staff/deleteorders")
     public ResponseEntity<?> deleteOrders(@RequestBody DeleteMarked deletemarked) {
-       
+            var ids = deletemarked.getIds();
+            System.out.println("ids are "+ids);
             var success = staffService.setdeletemarked(deletemarked.getIds());
             if (success) {
                 ResponseStatus status = new ResponseStatus("SUCCESS");
