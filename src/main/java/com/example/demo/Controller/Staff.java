@@ -2,6 +2,7 @@ package com.example.demo.Controller;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.UUID;
 // import java.util.concurrent.CompletableFuture;
@@ -126,7 +127,7 @@ public class Staff {
     }
 
     @GetMapping(value = "/staff/extralocations")
-    public List<OrderObjectDto> extraLocations(@RequestParam String id, @RequestParam List<Integer> idsToIgnore,
+    public LinkedHashMap<String,List<OrderObjectDto>> extraLocations(@RequestParam String id, @RequestParam List<Integer> idsToIgnore,
             @RequestParam double radiusInKm) {
         UUID guid = UUID.fromString(id);
         return staffService.getMoreDeliveryLocations(guid, idsToIgnore, radiusInKm);

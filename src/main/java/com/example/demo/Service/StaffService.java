@@ -2,7 +2,9 @@ package com.example.demo.Service;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -51,7 +53,7 @@ public class StaffService {
     }
 
     public List<OrdersDto> getOrders() {
-        //  get available orders --> statement "where delete-marked = false" 
+        // get available orders --> statement "where delete-marked = false"
         List<OrdersDto> orders = new ArrayList<>();
         orderrepo.findAll().forEach(delivery -> {
 
@@ -65,15 +67,15 @@ public class StaffService {
         return orders;
     }
 
-    public Boolean setdeletemarked(List<Integer> ids){
+    public Boolean setdeletemarked(List<Integer> ids) {
         try {
             orderrepo.updateDeleteMarker(ids);
             return true;
         } catch (Exception e) {
-            System.out.println("Exception "+e);
+            System.out.println("Exception " + e);
             return true;
         }
-    
+
     }
 
     public List<HubDto> getHubs() {
@@ -157,8 +159,9 @@ public class StaffService {
 
     }
 
-    public List<OrderObjectDto> getMoreDeliveryLocations(UUID destinationid, List<Integer> idsToIgnore,
+    public LinkedHashMap<String, List<OrderObjectDto>> getMoreDeliveryLocations(UUID destinationid, List<Integer> idsToIgnore,
             double radiusInKm) {
+
         double radiusInMiles = radiusInKm * 0.621;
 
         List<Selectedroute> route = selectedrouterepo.findByDestinationId(destinationid);
@@ -169,9 +172,9 @@ public class StaffService {
         List<HubsVisited> hubsVisited = new ArrayList<>();
         hubsVisited.add(destination);
 
-        boolean flag = false;
+        Map<String,List<OrderObjectDto>> map = new LinkedHashMap<String,List<OrderObjectDto>>();
 
-        List<OrderObjectDto> orderlist = new ArrayList<>();
+        boolean flag = false;
 
         /*
          * Cannot use stream() as "lambda's capture values not variables" -- line 151
@@ -179,17 +182,13 @@ public class StaffService {
         for (Selectedroute hub : route) {
             double Latitude = hub.getLocation_coordinates().getX();
             double Longitude = hub.getLocation_coordinates().getY();
-            ;
+            
             double lonMin = Longitude - radiusInMiles / Math.abs(Math.acos(Math.toRadians(Latitude)) * 69);
             double lonMax = Longitude + radiusInMiles / Math.abs(Math.acos(Math.toRadians(Latitude)) * 69);
             double latMin = Latitude - (radiusInMiles / 69);
             double latMax = Latitude + (radiusInMiles / 69);
 
-            System.out.print("Hub Coords: " + hub.getLocation_coordinates());
-            System.out.print("Longitude Minimum " + lonMin);
-            System.out.print("Longitude Maximim " + lonMax);
-            System.out.print("Latitude Minimum " + latMin);
-            System.out.print("Latitude Maximum " + latMax);
+            List<OrderObjectDto> orderlist = new ArrayList<>();
 
             if (flag) {
                 hubsVisited.add(new HubsVisited(hub.getLocation_coordinates(), hub.getFee()));
@@ -208,13 +207,14 @@ public class StaffService {
                     orderlist.add(order);
                 });
             }
+            map.put(hub.getAddress(), orderlist);
         }
 
-        return orderlist;
+        return (LinkedHashMap<String, List<OrderObjectDto>>) map;
 
     }
 
-    static ResultObjectDto set_OrderDistanceFromOrigin_HubsVisitedPlusDestination(ResultObjectDto result) {
+    public ResultObjectDto set_OrderDistanceFromOrigin_HubsVisitedPlusDestination(ResultObjectDto result) {
         List<HubObjectDto> arrayObject = result.getData();
 
         ResultObjectDto resultObject = new ResultObjectDto(result.getRouteId(), result.getRouteDistance(),
